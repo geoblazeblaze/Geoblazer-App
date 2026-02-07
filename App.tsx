@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Search, Info, CheckCircle2, Menu, Loader2, AlertCircle, RefreshCw, FileText, Download } from 'lucide-react';
+import { Search, Info, CheckCircle2, Menu, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Product, CartItem, UserInfo, AppTab, Category } from './types';
 import { MOCK_PRODUCTS, GOOGLE_SCRIPT_URL } from './constants';
 import { Layout } from './components/Layout';
@@ -10,7 +10,7 @@ import { Cart } from './components/Cart';
 import { Drawer } from './components/Drawer';
 import { LandingPage } from './components/LandingPage';
 import { submitOrderToSheet } from './services/googleSheetsService';
-import html2canvas from 'https://esm.sh/html2canvas';
+import html2canvas from 'html2canvas';
 
 const ITEMS_PER_PAGE = 16;
 
@@ -71,7 +71,7 @@ const App: React.FC = () => {
       const sanitizedData = data.map((p: any, index: number) => ({
         ...p,
         id: p.sku ? String(p.sku) : `item-${index}`,
-        pageUrl: p.pageUrl || '', // Ensure pageUrl is captured
+        pageUrl: p.pageUrl || '',
         price: typeof p.price === 'number' ? p.price : parseFloat(p.price || 0),
         discountPrice: p.discountPrice ? (typeof p.discountPrice === 'number' ? p.discountPrice : parseFloat(p.discountPrice)) : undefined
       }));
@@ -157,12 +157,12 @@ const App: React.FC = () => {
   const generateReceipt = async () => {
     if (!receiptRef.current) return;
     try {
-      // Small timeout to ensure the hidden component is "ready"
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 300));
       const canvas = await html2canvas(receiptRef.current, {
         scale: 2,
         backgroundColor: '#ffffff',
-        logging: false
+        logging: false,
+        useCORS: true
       });
       const image = canvas.toDataURL("image/png");
       const link = document.createElement('a');
@@ -176,12 +176,10 @@ const App: React.FC = () => {
 
   const handleSubmitOrder = async () => {
     setIsSubmitting(true);
-    // Keep a local copy of cart for the receipt since it might be cleared on success
     const finalItems = [...cart];
     const success = await submitOrderToSheet(userInfo, finalItems);
     
     if (success) {
-      // Trigger receipt download
       await generateReceipt();
       setCart([]);
       setShowSuccess(true);
