@@ -1,0 +1,5 @@
+{
+  "name": "HK Geocaching Shop Distributor",
+  "description": "A mobile-friendly order placement system for Geocaching trackables and products, featuring a catalog, cart management, and Google Sheets integration for order processing.",
+  "requestFramePermissions": []
+}
