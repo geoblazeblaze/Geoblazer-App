@@ -202,6 +202,13 @@ const App: React.FC = () => {
     setIsSubmitting(false);
   };
 
+  const handleCategorySelection = (cat: Category) => {
+    setSelectedCategory(cat);
+    // Automatically switch to Catalog tab when a new category is chosen from the drawer
+    setActiveTab(AppTab.TRACKABLES);
+    setIsDrawerOpen(false);
+  };
+
   if (showLanding) return <LandingPage onStart={() => setShowLanding(false)} />;
 
   // General input class with reduced left padding for standard fields
@@ -343,7 +350,7 @@ const App: React.FC = () => {
         {/* Overlays */}
         <Drawer 
           isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} 
-          selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} 
+          selectedCategory={selectedCategory} onSelectCategory={handleCategorySelection} 
         />
         
         {selectedProduct && (
