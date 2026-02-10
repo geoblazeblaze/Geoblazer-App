@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Search, Info, CheckCircle2, Menu, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Product, CartItem, UserInfo, AppTab, Category } from './types';
-import { MOCK_PRODUCTS, GOOGLE_SCRIPT_URL } from './constants';
+import { GOOGLE_SCRIPT_URL, CATEGORY_TO_SHEET_MAP } from './constants';
 import { Layout } from './components/Layout';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetail } from './components/ProductDetail';
@@ -18,7 +18,7 @@ const App: React.FC = () => {
   // Navigation
   const [showLanding, setShowLanding] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category>('All');
+  const [selectedCategory, setSelectedCategory] = useState<Category>('Recently Added');
   
   // Data State
   const [products, setProducts] = useState<Product[]>([]);
@@ -39,52 +39,56 @@ const App: React.FC = () => {
 
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  const isPlaceholderUrl = useMemo(() => 
-    GOOGLE_SCRIPT_URL.includes('YOUR_DEPLOYED_SCRIPT_ID'), 
-  []);
-
   // Fetch Products based on Category
   const fetchProducts = useCallback(async () => {
-    if (showLanding) return;
-
-    if (isPlaceholderUrl) {
-      setProducts(MOCK_PRODUCTS.filter(p => selectedCategory === 'All' || p.category === selectedCategory));
-      return;
-    }
+    if (showLanding || !GOOGLE_SCRIPT_URL) return;
 
     setIsLoading(true);
     setFetchError(null);
+    
+    // Explicit mapping prioritization
+    let sheetName = CATEGORY_TO_SHEET_MAP[selectedCategory];
+    
+    // If not in map, sanitize the category name for use as a sheet name
+    if (!sheetName) {
+      sheetName = selectedCategory.replace(/[®™]/g, '').trim();
+    }
+
+    console.log(`[Geoblazer] Requesting sheet: "${sheetName}" for category: "${selectedCategory}"`);
+
     try {
-      let sheetName = selectedCategory === 'All' ? 'Travel Bugs' : selectedCategory.replace(/®/g, '');
       const response = await fetch(`${GOOGLE_SCRIPT_URL}?sheet=${encodeURIComponent(sheetName)}`);
       
       if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
+        throw new Error(`Failed to reach the server (Status: ${response.status})`);
       }
       
       const data = await response.json();
       
       if (!Array.isArray(data)) {
-        throw new Error("Invalid format received. Expected a product list.");
+        console.warn(`[Geoblazer] Received non-array data for sheet: ${sheetName}`, data);
+        setProducts([]);
+        return;
       }
 
       const sanitizedData = data.map((p: any, index: number) => ({
         ...p,
         id: p.sku ? String(p.sku) : `item-${index}`,
         pageUrl: p.pageUrl || '',
-        price: typeof p.price === 'number' ? p.price : parseFloat(p.price || 0),
-        discountPrice: p.discountPrice ? (typeof p.discountPrice === 'number' ? p.discountPrice : parseFloat(p.discountPrice)) : undefined
+        imageUrl2: p.imageUrl2 || '',
+        price: typeof p.price === 'number' ? p.price : parseFloat(String(p.price || 0).replace(/[^0-9.]/g, '')),
+        discountPrice: (p.discountPrice && p.discountPrice !== '') ? (typeof p.discountPrice === 'number' ? p.discountPrice : parseFloat(String(p.discountPrice).replace(/[^0-9.]/g, ''))) : undefined
       }));
       
       setProducts(sanitizedData);
     } catch (error: any) {
-      console.error("Fetch Error:", error);
-      setFetchError(error.message || "Failed to load products from Google Sheets.");
+      console.error("[Geoblazer] Fetch Error:", error);
+      setFetchError(`Could not load section "${selectedCategory}". Error: ${error.message}`);
       setProducts([]);
     } finally {
       setIsLoading(false);
     }
-  }, [showLanding, selectedCategory, isPlaceholderUrl]);
+  }, [showLanding, selectedCategory]);
 
   useEffect(() => {
     fetchProducts();
@@ -148,6 +152,10 @@ const App: React.FC = () => {
     setActiveTab(AppTab.CART);
   };
 
+  const handleQuickAdd = (product: Product) => {
+    handleAddToCart(product, 1);
+  };
+
   const updateCartQuantity = (id: string, delta: number) => {
     setCart(prev => prev.map(item => (item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item)));
   };
@@ -157,6 +165,8 @@ const App: React.FC = () => {
   const generateReceipt = async () => {
     if (!receiptRef.current) return;
     try {
+      // Temporarily show the receipt container for capture
+      receiptRef.current.style.visibility = 'visible';
       await new Promise(resolve => setTimeout(resolve, 300));
       const canvas = await html2canvas(receiptRef.current, {
         scale: 2,
@@ -164,13 +174,15 @@ const App: React.FC = () => {
         logging: false,
         useCORS: true
       });
+      receiptRef.current.style.visibility = 'hidden';
       const image = canvas.toDataURL("image/png");
       const link = document.createElement('a');
       link.href = image;
       link.download = `Geoblazer_Order_${new Date().getTime()}.png`;
       link.click();
     } catch (err) {
-      console.error("Failed to generate receipt image:", err);
+      console.error("[Geoblazer] Failed to generate receipt image:", err);
+      if (receiptRef.current) receiptRef.current.style.visibility = 'hidden';
     }
   };
 
@@ -192,21 +204,22 @@ const App: React.FC = () => {
 
   if (showLanding) return <LandingPage onStart={() => setShowLanding(false)} />;
 
-  const inputClass = "w-full p-4 pl-12 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#00863f] focus:bg-white transition-all";
+  // General input class with reduced left padding for standard fields
+  const inputClass = "w-full p-4 pl-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#00863f] focus:bg-white transition-all";
 
   return (
-    <div className="min-h-screen bg-[#f4f7f5] text-gray-900">
+    <div className="min-h-screen bg-[#f4f7f5] text-gray-900 overflow-x-hidden">
       <Layout activeTab={activeTab} setActiveTab={setActiveTab} cartCount={cartCount}>
         
         {/* Header */}
-        <div className="p-4 sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 flex items-center justify-between">
+        <div className="p-4 sticky top-0 z-40 bg-white border-b border-gray-100 flex items-center justify-between shadow-sm">
           <div className="flex items-center space-x-3">
             <button onClick={() => setIsDrawerOpen(true)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
               <Menu size={24} className="text-gray-700" />
             </button>
             <div>
               <h1 className="text-xl font-black text-[#00863f]">Geoblazer</h1>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Shop Geocaching Bulk Ordering HK</p>
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Shop Geocaching HK Distributor</p>
             </div>
           </div>
           <div className="w-10 h-10 bg-[#00863f]/10 rounded-full flex items-center justify-center">
@@ -222,23 +235,23 @@ const App: React.FC = () => {
         {activeTab === AppTab.TRACKABLES && (
           <div className="p-4 space-y-6">
             <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={18} />
               <input 
                 type="text"
-                placeholder={`Search in ${selectedCategory === 'All' ? 'Catalog' : selectedCategory}...`}
+                placeholder={`Search in ${selectedCategory}...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={inputClass}
+                className={`${inputClass} !pl-12`} // Use !pl-12 to ensure it overrides and provides enough room for the icon
               />
             </div>
 
             <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-bold text-gray-800">{selectedCategory === 'All' ? 'Initial Inventory' : selectedCategory}</h2>
+              <h2 className="text-lg font-bold text-gray-800">{selectedCategory}</h2>
               <span className="text-xs text-gray-500 font-medium">{filteredProducts.length} items</span>
             </div>
 
             {fetchError ? (
-              <div className="p-8 bg-red-50 border border-red-100 rounded-3xl text-center space-y-4 animate-in fade-in zoom-in duration-300">
+              <div className="p-8 bg-red-50 border border-red-100 rounded-3xl text-center space-y-4">
                 <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto">
                   <AlertCircle size={32} />
                 </div>
@@ -248,7 +261,7 @@ const App: React.FC = () => {
                 </div>
                 <button 
                   onClick={fetchProducts}
-                  className="inline-flex items-center space-x-2 px-6 py-3 bg-red-500 text-white font-bold rounded-2xl shadow-lg shadow-red-500/20 active:scale-95 transition-transform"
+                  className="inline-flex items-center space-x-2 px-6 py-3 bg-red-500 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-transform"
                 >
                   <RefreshCw size={18} />
                   <span>Retry Connection</span>
@@ -257,12 +270,12 @@ const App: React.FC = () => {
             ) : isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 space-y-4">
                 <Loader2 className="w-10 h-10 animate-spin text-[#00863f]" />
-                <p className="text-gray-500 font-medium">Loading {selectedCategory}...</p>
+                <p className="text-gray-500 font-medium">Updating catalog...</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {visibleProducts.map(product => (
-                  <ProductCard key={product.id} product={product} onClick={setSelectedProduct} />
+                  <ProductCard key={product.id} product={product} onClick={setSelectedProduct} onQuickAdd={handleQuickAdd} />
                 ))}
               </div>
             )}
@@ -277,7 +290,7 @@ const App: React.FC = () => {
                 ) : filteredProducts.length > 0 ? (
                   <p className="text-gray-400 text-sm italic">End of stash list</p>
                 ) : !isLoading && (
-                   <p className="text-gray-400 text-sm italic">No items found in this category.</p>
+                   <p className="text-gray-400 text-sm italic">No items found in this section.</p>
                 )}
               </div>
             )}
@@ -351,9 +364,11 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Hidden Receipt for Screenshot Generation */}
-        <div className="fixed left-[-9999px] top-0">
-          <div ref={receiptRef} className="w-[500px] bg-white p-8 space-y-6 text-gray-900 border-8 border-[#00863f]">
+        <div 
+          ref={receiptRef} 
+          style={{ visibility: 'hidden', position: 'absolute', top: '-10000px', pointerEvents: 'none' }} 
+          className="w-[500px] bg-white p-8 space-y-6 text-gray-900 border-8 border-[#00863f]"
+        >
             <div className="text-center border-b-2 border-gray-100 pb-6">
               <h1 className="text-4xl font-black text-[#00863f] mb-1">GEOBLAZER</h1>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Shop Geocaching Bulk Order Receipt</p>
@@ -398,7 +413,6 @@ const App: React.FC = () => {
               <p className="font-bold mb-1 italic">"We use million dollar satellites to find penny treasures!"</p>
               <p>Thank you for using Geoblazer Bulk Ordering HK</p>
             </div>
-          </div>
         </div>
       </Layout>
     </div>

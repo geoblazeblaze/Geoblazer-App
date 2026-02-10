@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, Minus, Plus } from 'lucide-react';
 import { Product } from '../types';
@@ -30,17 +29,28 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ product, onBack, o
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-32">
-        <div className="bg-white rounded-3xl p-6 mb-8 shadow-md border border-gray-100 flex items-center justify-center relative">
+        <div className={`bg-white rounded-3xl p-6 mb-8 shadow-md border border-gray-100 flex items-center justify-center relative gap-4 ${product.imageUrl2 ? 'flex-col sm:flex-row' : ''}`}>
           {product.discount && (
             <div className={`absolute top-4 left-4 px-3 py-1.5 rounded-full text-xs font-black text-white shadow-lg z-10 ${isSoldOut ? 'bg-gray-400' : 'bg-red-500'}`}>
               {product.discount}
             </div>
           )}
-          <img 
-            src={product.imageUrl} 
-            alt={product.name}
-            className={`w-full max-w-[300px] aspect-square object-contain ${isSoldOut ? 'grayscale opacity-60' : ''}`}
-          />
+          <div className="flex-1 flex justify-center">
+            <img 
+              src={product.imageUrl} 
+              alt={product.name}
+              className={`w-full max-w-[300px] aspect-square object-contain ${isSoldOut ? 'grayscale opacity-60' : ''}`}
+            />
+          </div>
+          {product.imageUrl2 && (
+            <div className="flex-1 flex justify-center">
+              <img 
+                src={product.imageUrl2} 
+                alt={`${product.name} view 2`}
+                className={`w-full max-w-[300px] aspect-square object-contain ${isSoldOut ? 'grayscale opacity-60' : ''}`}
+              />
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">

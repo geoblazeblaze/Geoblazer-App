@@ -1,7 +1,6 @@
 
 import { Product, Category } from './types';
 
-// Fix: Added textSecondary to avoid property 'textSecondary' does not exist error in BottomNav.tsx
 export const COLORS = {
   primary: '#00863f', // Geocaching Green
   accent: '#f3a63b',  // Geocaching Orange
@@ -11,39 +10,86 @@ export const COLORS = {
 };
 
 export const CATEGORIES: Category[] = [
-  'All',
-  'Travel Bugs®',
-  'Geocoins',
-  'Trackable Tags',
-  'QR Tags',
-  'Novelty Trackables',
-  'Trackable Gear',
-  'Trackable Patches',
-  'Trackable Nametags',
-  'Challenges & Milestones'
+  'New & Featured', 'Recently Added', '25 Years of Geocaching', 'CITO Collection', 'Premium Member Collection', 'Event Hosting', 'EarthCache™ Collection', 'Adventure Lab® Products', 'Challenges & Milestones', 'Happy Holidays Collection',
+  'Find-a-cache', 'GPS Devices', 'Packs & Gear', 'TOTT - Tools Of The Trade', 'Pencils & Pens', 'Flashlights', 'Puzzle Caches', 'Starter Kits',
+  'Hide-a-cache', 'Cache Containers', 'Back to Nature', 'Devious Caches', 'Ready to Hide Cache Kits', 'Geocache Labels', 'Rite in the Rain®', 'Logbooks', 'First To Find', 'Night Caching', 'Make / Maintain Caches',
+  'Trackables', 'Travel Bugs®', 'Geocoins', 'Trackable Tags', 'QR Tags', 'Novelty Trackables', 'Trackable Gear', 'Trackable Patches', 'Trackable Nametags',
+  'Wearables', 'Shirts', 'Jackets & Hoodies', 'Hats & Gloves', 'Patches & Pins', 'Bags & Packs', 'Hiking Gear', 'Kids', 'Pet Gear',
+  'Gifts & Swags', 'Geocaching Gift Ideas', 'Gift Certificates', 'Swag & Trade Items', 'Stickers and Clings', 'Vehicle Gear', 'Signal the Frog®', 'Geocaching Logo Gear', 'Novelty items', 'Geocaching Books', 'Geocaching Kids', 'Plush Items',
+  'Clearance', 'Items On Sale', 'Last Chance Items'
 ];
 
-export const MOCK_PRODUCTS: Product[] = [
-  // Fix: Added required pageUrl property to mock products
-  { id: '1', category: 'Travel Bugs®', name: 'Geocaching Travel Bug®', sku: 'TB-01', price: 4.99, imageUrl: 'https://shop.geocaching.com/cdn/shop/products/travel-bug-trackable-tag_1_600x600.jpg?v=1646261545', pageUrl: 'https://shop.geocaching.com/products/travel-bug-trackable-tag' },
-  { id: '2', category: 'Geocoins', name: 'Official 2024 Geocoin', sku: 'GC-2024', price: 15.99, imageUrl: 'https://picsum.photos/seed/coin1/400/400', pageUrl: '#' },
-  { id: '3', category: 'Trackable Tags', name: 'Signal the Frog® Tag', sku: 'TAG-01', price: 5.25, imageUrl: 'https://shop.geocaching.com/cdn/shop/products/signal-the-frog-trackable-tag_1_600x600.jpg?v=1646261564', pageUrl: 'https://shop.geocaching.com/products/signal-the-frog-trackable-tag' },
-  { id: '4', category: 'Novelty Trackables', name: 'Cache Kin® Ladybug', sku: 'NOV-01', price: 5.99, imageUrl: 'https://shop.geocaching.com/cdn/shop/products/cache-kin-ladybug_1_600x600.jpg?v=1646261568', pageUrl: 'https://shop.geocaching.com/products/cache-kin-ladybug' },
-  { id: '5', category: 'QR Tags', name: 'Munzee QR Trackable', sku: 'QR-01', price: 3.50, imageUrl: 'https://picsum.photos/seed/qr1/400/400', pageUrl: '#' },
-  { id: '6', category: 'Trackable Gear', name: 'Reflective TB Decal', sku: 'GEAR-01', price: 11.99, imageUrl: 'https://shop.geocaching.com/cdn/shop/products/travel-bug-reflective-decal-6-inch_1_600x600.jpg?v=1646261552', pageUrl: 'https://shop.geocaching.com/products/travel-bug-reflective-decal-6-inch' },
-  { id: '7', category: 'Trackable Patches', name: 'Embroidered TB Patch', sku: 'PATCH-01', price: 6.50, imageUrl: 'https://picsum.photos/seed/patch1/400/400', pageUrl: '#' },
-  { id: '8', category: 'Challenges & Milestones', name: '100 Finds Milestone Coin', sku: 'MILE-100', price: 12.99, imageUrl: 'https://picsum.photos/seed/mile1/400/400', pageUrl: '#' },
-  { id: '9', category: 'Trackable Nametags', name: 'Custom Name Tag', sku: 'NAME-01', price: 8.99, imageUrl: 'https://picsum.photos/seed/name1/400/400', pageUrl: '#' },
-  // Adding duplicates for infinite scroll demonstration
-  ...Array.from({ length: 20 }).map((_, i) => ({
-    id: `extra-${i}`,
-    category: CATEGORIES[Math.floor(Math.random() * (CATEGORIES.length - 1)) + 1],
-    name: `Bulk Item #${i + 10}`,
-    sku: `SKU-B-${i}`,
-    price: Math.floor(Math.random() * 20) + 5.99,
-    imageUrl: `https://picsum.photos/seed/item${i}/400/400`,
-    pageUrl: '#'
-  }))
-];
+export const CATEGORY_TO_SHEET_MAP: Record<string, string> = {
+  // New & Featured
+  'Recently Added': 'recently-added',
+  '25 Years of Geocaching': '25-years-of-geocaching',
+  'CITO Collection': 'CITO',
+  'Premium Member Collection': 'premium-member-collection',
+  'Event Hosting': 'hq-event',
+  'EarthCache™ Collection': 'international-earthcache-day',
+  'Adventure Lab® Products': 'adventure-lab-products',
+  'Challenges & Milestones': 'Challenges & Milestones',
+  'Happy Holidays Collection': 'happy-holidays-collection',
+
+  // Find-a-cache
+  'GPS Devices': 'gps-devices',
+  'Packs & Gear': 'packs-gear',
+  'TOTT - Tools Of The Trade': 'tott',
+  'Pencils & Pens': 'pencils-pens',
+  'Flashlights': 'flashlights',
+  'Puzzle Caches': 'puzzle-caches',
+  'Starter Kits': 'starter-kits',
+
+  // Hide-a-cache
+  'Cache Containers': 'cache-containers',
+  'Back to Nature': 'back-to-nature',
+  'Devious Caches': 'devious-caches',
+  'Ready to Hide Cache Kits': 'cache-kits',
+  'Geocache Labels': 'cache-labels',
+  'Rite in the Rain®': 'rite-in-the-rain',
+  'Logbooks': 'logbooks',
+  'First To Find': 'first-to-find',
+  'Night Caching': 'night-caching',
+  'Make / Maintain Caches': 'cache-maintenance',
+
+  // Wearables
+  'Shirts': 'shirts-wearables',
+  'Jackets & Hoodies': 'jackets-and-hoodies',
+  'Hats & Gloves': 'hats',
+  'Patches & Pins': 'patches-and-pins',
+  'Bags & Packs': 'bags-packs',
+  'Hiking Gear': 'hiking-gear',
+  'Kids': 'kids',
+  'Pet Gear': 'pet-gear',
+
+  // Gifts & Swags
+  'Geocaching Gift Ideas': 'gift-ideas',
+  'Gift Certificates': 'gift-certificates',
+  'Swag & Trade Items': 'swag',
+  'Stickers and Clings': 'stickers-and-clings',
+  'Vehicle Gear': 'vehicle-gear',
+  'Signal the Frog®': 'signal-the-frog',
+  'Geocaching Logo Gear': 'geocaching-logo-collection',
+  'Novelty items': 'novelty-items-gifts-swag',
+  'Geocaching Books': 'geocaching-books',
+  'Geocaching Kids': 'geocaching-kids',
+  'Plush Items': 'plush-items',
+
+  // Clearance
+  'Items On Sale': 'on-sale',
+  'Last Chance Items': 'last-chance-items',
+
+  // Trackables (Updated to match likely exact sheet names)
+  'Travel Bugs®': 'Travel Bugs',
+  'Geocoins': 'Geocoins',
+  'Trackable Tags': 'Trackable Tags',
+  'QR Tags': 'QR Tags',
+  'Novelty Trackables': 'Novelty Trackables',
+  'Trackable Gear': 'Trackable Gear',
+  'Trackable Patches': 'Trackable Patches',
+  'Trackable Nametags': 'Trackable Nametags'
+};
+
+export const MOCK_PRODUCTS: Product[] = []; 
 
 export const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxT2rsaPDWXxWKnxK63qGgX_BEq1SwAaCZ8AG5fnEALnxahJg-mGlCA3kRIQGAiRD-/exec';
